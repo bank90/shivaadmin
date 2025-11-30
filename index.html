@@ -1,0 +1,2756 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SMS & Call Forwarding Admin Panel</title>
+    <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-database-compat.js"></script>
+    <style>
+        /* Enhanced Mobile-First CSS */
+        :root {
+            --primary-color: #007bff;
+            --primary-dark: #0056b3;
+            --success-color: #28a745;
+            --success-dark: #218838;
+            --danger-color: #dc3545;
+            --danger-dark: #c82333;
+            --warning-color: #ffc107;
+            --warning-dark: #e0a800;
+            --info-color: #17a2b8;
+            --light-gray: #f8f9fa;
+            --medium-gray: #e9ecef;
+            --dark-gray: #6c757d;
+            --text-color: #333;
+            --border-color: #ddd;
+            --card-shadow: 0 4px 12px rgba(0,0,0,0.08);
+            --header-height: 60px;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body { 
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; 
+            margin: 0; 
+            background: #f5f5f7; 
+            color: var(--text-color);
+            line-height: 1.5;
+        }
+
+        .container { 
+            max-width: 1200px; 
+            margin: 0 auto; 
+            padding: 15px;
+        }
+
+        /* Header Styles */
+        .app-header {
+            background: linear-gradient(135deg, var(--primary-color), #0056b3);
+            color: white;
+            padding: 15px 0;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+
+        .header-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 15px;
+        }
+
+        .app-title {
+            font-size: 1.5rem;
+            font-weight: 600;
+            margin: 0;
+            display: flex;
+            align-items: center;
+        }
+
+        .app-title i {
+            margin-right: 10px;
+            font-size: 1.6rem;
+        }
+
+        .header-actions {
+            display: flex;
+            gap: 10px;
+        }
+
+        /* Card Styles */
+        .card { 
+            background: white; 
+            padding: 20px; 
+            margin-bottom: 20px; 
+            border-radius: 12px; 
+            box-shadow: var(--card-shadow);
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        .card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 16px rgba(0,0,0,0.1);
+        }
+
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid var(--medium-gray);
+        }
+
+        .card-title {
+            font-size: 1.2rem;
+            font-weight: 600;
+            margin: 0;
+            color: var(--primary-color);
+        }
+
+        /* Form Elements */
+        .form-group { 
+            margin: 20px 0; 
+        }
+
+        .form-label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: var(--text-color);
+        }
+
+        .form-control {
+            width: 100%;
+            padding: 12px 15px;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            font-size: 16px;
+            transition: border-color 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        .form-control:focus {
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 3px rgba(0,123,255,0.1);
+            outline: none;
+        }
+
+        textarea.form-control {
+            min-height: 100px;
+            resize: vertical;
+            font-family: inherit;
+        }
+
+        /* Button Styles */
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            padding: 12px 20px;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            text-decoration: none;
+            gap: 8px;
+        }
+
+        .btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        .btn-primary {
+            background: var(--primary-color);
+            color: white;
+        }
+
+        .btn-primary:hover:not(:disabled) {
+            background: var(--primary-dark);
+        }
+
+        .btn-success {
+            background: var(--success-color);
+            color: white;
+        }
+
+        .btn-success:hover:not(:disabled) {
+            background: var(--success-dark);
+        }
+
+        .btn-danger {
+            background: var(--danger-color);
+            color: white;
+        }
+
+        .btn-danger:hover:not(:disabled) {
+            background: var(--danger-dark);
+        }
+
+        .btn-warning {
+            background: var(--warning-color);
+            color: #212529;
+        }
+
+        .btn-warning:hover:not(:disabled) {
+            background: var(--warning-dark);
+        }
+
+        .btn-outline {
+            background: transparent;
+            border: 1px solid var(--border-color);
+            color: var(--text-color);
+        }
+
+        .btn-outline:hover:not(:disabled) {
+            background: var(--light-gray);
+        }
+
+        .btn-sm {
+            padding: 8px 15px;
+            font-size: 14px;
+        }
+
+        .btn-group {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        /* Status Indicators */
+        .status-badge {
+            display: inline-flex;
+            align-items: center;
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-size: 14px;
+            font-weight: 600;
+            gap: 6px;
+        }
+
+        .status-online {
+            background: rgba(40, 167, 69, 0.1);
+            color: var(--success-color);
+        }
+
+        .status-offline {
+            background: rgba(108, 117, 125, 0.1);
+            color: var(--dark-gray);
+        }
+
+        .status-processing {
+            background: rgba(255, 193, 7, 0.1);
+            color: var(--warning-color);
+        }
+
+        .status-error {
+            background: rgba(220, 53, 69, 0.1);
+            color: var(--danger-color);
+        }
+
+        /* NEW: Active and Inactive Status Styles */
+        .status-active {
+            background: rgba(40,167,69,0.1);
+            color: #28a745;
+        }
+        .status-inactive {
+            background: rgba(220,53,69,0.1);
+            color: #dc3545;
+        }
+
+        /* Device List */
+        .devices-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 20px;
+        }
+
+        .device-card {
+            border-left: 4px solid var(--primary-color);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .device-card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+        }
+
+        .device-info {
+            flex: 1;
+        }
+
+        .device-name {
+            font-size: 1.1rem;
+            font-weight: 600;
+            margin: 0 0 5px 0;
+        }
+
+        .device-id {
+            font-size: 0.85rem;
+            color: var(--dark-gray);
+            margin: 0;
+        }
+
+        .device-serial {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: var(--medium-gray);
+        }
+
+        .sim-info {
+            background: #e8f4fd;
+            padding: 12px;
+            border-radius: 8px;
+            margin: 15px 0;
+            font-size: 14px;
+        }
+
+        .sim-number {
+            font-weight: bold;
+            color: #155724;
+        }
+
+        .device-actions {
+            display: flex;
+            gap: 10px;
+            margin-top: 15px;
+        }
+
+        /* Modal Styles */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.6);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 2000;
+            padding: 15px;
+            box-sizing: border-box;
+        }
+
+        .modal-content {
+            background: white;
+            padding: 25px;
+            border-radius: 12px;
+            width: 100%;
+            max-width: 800px;
+            max-height: 90vh;
+            overflow-y: auto;
+            position: relative;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        }
+
+        /* UPDATED: Close Button - Red Color & Larger Size */
+        .close-button {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            font-size: 32px; /* Increased size */
+            font-weight: bold;
+            color: var(--danger-color); /* Red color */
+            cursor: pointer;
+            line-height: 1;
+            z-index: 10;
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            transition: all 0.3s ease;
+        }
+
+        .close-button:hover { 
+            background-color: rgba(220, 53, 69, 0.1);
+            transform: scale(1.1);
+        }
+
+        /* SIM Selection - UPDATED: SIM 1 & SIM 2 in horizontal line for ALL devices */
+        .sim-options {
+            display: flex;
+            gap: 10px;
+            margin: 10px 0;
+            flex-wrap: nowrap;
+        }
+
+        .sim-option {
+            text-align: center;
+            padding: 12px 8px;
+            border: 2px solid var(--border-color);
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            width: 50%;
+            min-width: 0;
+            flex-shrink: 1;
+        }
+
+        .sim-option:hover {
+            border-color: var(--primary-color);
+            background-color: #f8f9fa;
+        }
+
+        .sim-option.selected {
+            border-color: var(--success-color);
+            background-color: #e8f5e8;
+        }
+
+        .sim-option.disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .sim-option h4 {
+            margin: 0 0 8px 0;
+            font-size: 14px;
+            font-weight: 600;
+        }
+
+        .sim-option p {
+            margin: 0;
+            font-size: 12px;
+            color: var(--dark-gray);
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        /* SMS Styles */
+        .sms-container {
+            max-height: 400px;
+            overflow-y: auto;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 10px;
+        }
+
+        .sms-message {
+            background: var(--light-gray);
+            border-left: 4px solid var(--primary-color);
+            padding: 12px;
+            margin: 8px 0;
+            border-radius: 6px;
+        }
+
+        .sms-header {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 8px;
+            flex-wrap: wrap;
+        }
+
+        .sms-sender {
+            font-weight: bold;
+            color: var(--primary-color);
+        }
+
+        .sms-time {
+            color: var(--dark-gray);
+            font-size: 12px;
+        }
+
+        .sms-body {
+            color: var(--text-color);
+            line-height: 1.5;
+            word-wrap: break-word;
+        }
+
+        .sms-count {
+            background: var(--primary-color);
+            color: white;
+            padding: 3px 9px;
+            border-radius: 12px;
+            font-size: 13px;
+            margin-left: 10px;
+        }
+
+        /* Trial Status */
+        .trial-status {
+            background: #e9ecef;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .trial-info {
+            flex: 1;
+            min-width: 200px;
+        }
+
+        .trial-progress {
+            flex-grow: 1;
+            height: 10px;
+            background: #dee2e6;
+            border-radius: 5px;
+            margin: 0 15px;
+            overflow: hidden;
+            min-width: 150px;
+        }
+
+        .trial-progress-bar {
+            height: 100%;
+            background: var(--success-color);
+            transition: width 0.5s ease;
+        }
+
+        .trial-warning .trial-progress-bar {
+            background: var(--warning-color);
+        }
+
+        .trial-expired .trial-progress-bar {
+            background: var(--danger-color);
+        }
+
+        /* Password Protection */
+        #passwordOverlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.85);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 3000;
+        }
+
+        #passwordForm {
+            background: white;
+            padding: 30px;
+            border-radius: 12px;
+            width: 90%;
+            max-width: 400px;
+            text-align: center;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+        }
+
+        /* NEW: Notification System */
+        .notification-container {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 5000;
+            max-width: 400px;
+            width: 90%;
+        }
+
+        .notification {
+            background: white;
+            border-radius: 10px;
+            padding: 16px 20px;
+            margin-bottom: 15px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.15);
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            transform: translateX(120%);
+            transition: transform 0.4s ease;
+            border-left: 5px solid var(--primary-color);
+        }
+
+        .notification.show {
+            transform: translateX(0);
+        }
+
+        .notification-icon {
+            font-size: 24px;
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            flex-shrink: 0;
+        }
+
+        .notification-content {
+            flex: 1;
+        }
+
+        .notification-title {
+            font-weight: 600;
+            margin: 0 0 5px 0;
+            font-size: 16px;
+        }
+
+        .notification-message {
+            margin: 0;
+            font-size: 14px;
+            color: var(--dark-gray);
+        }
+
+        .notification-close {
+            background: none;
+            border: none;
+            font-size: 18px;
+            cursor: pointer;
+            color: var(--dark-gray);
+            opacity: 0.7;
+            transition: opacity 0.2s;
+            padding: 5px;
+            border-radius: 50%;
+        }
+
+        .notification-close:hover {
+            opacity: 1;
+            background: rgba(0,0,0,0.05);
+        }
+
+        /* Notification Types */
+        .notification-success {
+            border-left-color: var(--success-color);
+        }
+        .notification-success .notification-icon {
+            background: rgba(40, 167, 69, 0.1);
+            color: var(--success-color);
+        }
+
+        .notification-error {
+            border-left-color: var(--danger-color);
+        }
+        .notification-error .notification-icon {
+            background: rgba(220, 53, 69, 0.1);
+            color: var(--danger-color);
+        }
+
+        .notification-warning {
+            border-left-color: var(--warning-color);
+        }
+        .notification-warning .notification-icon {
+            background: rgba(255, 193, 7, 0.1);
+            color: var(--warning-color);
+        }
+
+        .notification-info {
+            border-left-color: var(--info-color);
+        }
+        .notification-info .notification-icon {
+            background: rgba(23, 162, 184, 0.1);
+            color: var(--info-color);
+        }
+
+        /* Utility Classes */
+        .text-center { text-align: center; }
+        .text-right { text-align: right; }
+        .text-success { color: var(--success-color); }
+        .text-danger { color: var(--danger-color); }
+        .text-warning { color: var(--warning-color); }
+        .text-muted { color: var(--dark-gray); }
+        .mb-0 { margin-bottom: 0; }
+        .mb-1 { margin-bottom: 10px; }
+        .mb-2 { margin-bottom: 15px; }
+        .mb-3 { margin-bottom: 20px; }
+        .mt-0 { margin-top: 0; }
+        .mt-1 { margin-top: 10px; }
+        .mt-2 { margin-top: 15px; }
+        .mt-3 { margin-top: 20px; }
+        .d-flex { display: flex; }
+        .d-block { display: block; }
+        .d-none { display: none; }
+        .align-center { align-items: center; }
+        .justify-between { justify-content: space-between; }
+        .flex-wrap { flex-wrap: wrap; }
+        .gap-1 { gap: 10px; }
+        .gap-2 { gap: 15px; }
+
+        /* Animations */
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        @keyframes slideIn {
+            from { transform: translateY(-20px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            10%, 30%, 50%, 70%, 90% { transform: translateX(-5px); }
+            20%, 40%, 60%, 80% { transform: translateX(5px); }
+        }
+
+        .fade-in {
+            animation: fadeIn 0.3s ease;
+        }
+
+        .slide-in {
+            animation: slideIn 0.3s ease;
+        }
+
+        .shake {
+            animation: shake 0.5s;
+        }
+
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .container {
+                padding: 10px;
+            }
+
+            .app-title {
+                font-size: 1.3rem;
+            }
+
+            .header-actions {
+                flex-direction: column;
+                gap: 5px;
+            }
+
+            .devices-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .device-card-header {
+                flex-direction: column;
+            }
+
+            .device-serial {
+                align-self: flex-end;
+                margin-top: 10px;
+            }
+
+            .device-actions {
+                flex-direction: column;
+            }
+
+            .btn-group {
+                flex-direction: column;
+            }
+
+            .trial-status {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+
+            .trial-progress {
+                width: 100%;
+                margin: 10px 0;
+            }
+
+            .modal-content {
+                padding: 20px 15px;
+            }
+
+            /* SIM options ko horizontal hi rakhne ke liye */
+            .sim-options {
+                flex-wrap: nowrap !important;
+            }
+            
+            .sim-option {
+                width: 48%;
+                min-width: 120px;
+            }
+
+            .card {
+                padding: 15px;
+            }
+
+            .notification-container {
+                right: 10px;
+                left: 10px;
+                max-width: none;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .app-title {
+                font-size: 1.1rem;
+            }
+
+            .card-title {
+                font-size: 1.1rem;
+            }
+
+            .btn {
+                width: 100%;
+                justify-content: center;
+            }
+
+            .header-content {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 10px;
+            }
+
+            .header-actions {
+                width: 100%;
+            }
+            
+            /* Chote screens ke liye SIM options */
+            .sim-options {
+                gap: 5px;
+            }
+            
+            .sim-option {
+                padding: 8px 4px;
+            }
+            
+            .sim-option h4 {
+                font-size: 12px;
+            }
+            
+            .sim-option p {
+                font-size: 10px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- NEW: Notification Container -->
+    <div class="notification-container" id="notificationContainer"></div>
+
+    <!-- Password Protection Overlay -->
+    <div id="passwordOverlay">
+        <div id="passwordForm" class="slide-in">
+            <h2 class="text-center">🔒 Admin Panel Access</h2>
+            <p>Please enter the password to continue:</p>
+            <input type="password" id="passwordInput" class="form-control" placeholder="Enter password" autocomplete="off" />
+            <div id="passwordError" class="text-danger mt-1"></div>
+            <button class="btn btn-primary mt-2" onclick="checkPassword()">Access Dashboard</button>
+            <div class="text-muted mt-2">
+                <p>Contact administrator if you don't have the password.</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main App Header -->
+    <header class="app-header">
+        <div class="header-content">
+            <h1 class="app-title">📱 SMS & Call Forwarding Admin</h1>
+            <div class="header-actions" id="headerActions" style="display: none;">
+                <button class="btn btn-outline btn-sm" onclick="openPasswordChangeModal()">
+                    <span>🔑</span> Change Password
+                </button>
+                <button class="btn btn-danger btn-sm" onclick="logout()">
+                    <span>🚪</span> Logout
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Trial Expiry Modal -->
+    <div id="trialExpiryModal" class="modal-overlay">
+        <div class="modal-content slide-in">
+            <h2 class="text-center">⚠️ Trial Period Expired</h2>
+            <p class="text-center">Your 30-day trial period has ended. Please make a payment to continue using the service.</p>
+            
+            <div class="countdown-timer text-center text-danger mb-3" id="expiryCountdown">
+                Access Expired
+            </div>
+            
+            <div class="payment-options">
+                <div class="sim-options">
+                    <div class="sim-option" onclick="processPayment(999, 30)">
+                        <h4>1 Month</h4>
+                        <div class="payment-amount text-success">₹999</div>
+                    </div>
+                    <div class="sim-option" onclick="processPayment(2499, 90)">
+                        <h4>3 Months</h4>
+                        <div class="payment-amount text-success">₹2,499</div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="text-muted mt-3">
+                <p class="text-center">After payment, contact administrator with transaction details to activate your account.</p>
+                <p class="text-center"><strong>Payment Methods:</strong> UPI, Bank Transfer, Credit/Debit Card</p>
+            </div>
+            
+            <div class="btn-group mt-3">
+                <button class="btn btn-danger" onclick="logout()">Logout</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Delete Device Confirmation Modal -->
+    <div id="deleteDeviceModal" class="modal-overlay">
+        <div class="modal-content slide-in">
+            <span class="close-button" onclick="closeDeleteDeviceModal()">&times;</span>
+            <h2>⚠️ Delete Device</h2>
+            <p>Are you sure you want to delete this device? This action cannot be undone.</p>
+            <div id="deleteDeviceInfo" class="text-muted p-3 mb-3" style="background: #f8f9fa; border-radius: 5px;"></div>
+            
+            <div class="form-group">
+                <label for="deletePassword" class="form-label">Enter Admin Password to Confirm:</label>
+                <input type="password" id="deletePassword" class="form-control" placeholder="Enter admin password" autocomplete="off" />
+            </div>
+            <div id="deleteDeviceError" class="text-danger mb-2"></div>
+            
+            <div class="btn-group">
+                <button class="btn btn-danger" onclick="confirmDeleteDevice()">Delete Device</button>
+                <button class="btn btn-outline" onclick="closeDeleteDeviceModal()">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <main class="container" id="mainContent" style="display:none;">
+        <!-- Trial Status Bar -->
+        <div class="trial-status" id="trialStatus">
+            <div class="trial-info">
+                <strong>Trial Period:</strong> 
+                <span id="trialDaysLeft">30</span> days remaining
+            </div>
+            <div class="trial-progress">
+                <div class="trial-progress-bar" id="trialProgressBar" style="width: 100%"></div>
+            </div>
+            <div id="trialEndDate" class="text-muted">Expires: Loading...</div>
+        </div>
+        
+        <!-- Devices Section -->
+        <section class="mb-3">
+            <div class="card">
+                <div class="card-header">
+                    <h2 class="card-title">📱 Connected Devices</h2>
+                    <div class="status-badge" id="deviceStatusBadge">
+                        <span id="deviceCount">0</span> Devices
+                    </div>
+                </div>
+                <div id="devicesList">
+                    <div class="text-center text-muted p-4">Loading devices...</div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- Device Details Modal -->
+    <div id="deviceModal" class="modal-overlay">
+        <div class="modal-content slide-in">
+            <!-- UPDATED: Red & Larger Close Button -->
+            <span class="close-button" onclick="closeModal()">&times;</span>
+            <div id="deviceDetails">
+                <!-- UPDATED: Smaller Device Information -->
+                <div class="card-header mb-2" style="padding-bottom: 5px;">
+                    <h2 class="card-title" style="font-size: 1.1rem; margin: 0;">Device Control</h2>
+                    <div id="selectedDeviceName" class="text-muted" style="font-size: 0.9rem;">-</div>
+                </div>
+                
+                <!-- Call Forwarding -->
+                <div class="card mb-3">
+                    <div class="card-header" style="padding-bottom: 8px;">
+                        <h3 class="card-title" style="font-size: 1rem;">📞 Call Forwarding</h3>
+                    </div>
+                    <div class="form-group" style="margin: 15px 0;">
+                        <label for="callForwardNumber" class="form-label" style="font-size: 0.9rem;">Call Forward Number:</label>
+                        <input type="text" id="callForwardNumber" class="form-control" placeholder="+919876543210" style="padding: 10px;" />
+                        <div class="text-muted mt-1" style="font-size: 0.8rem;">Enter number where calls should be forwarded.</div>
+                    </div>
+                    
+                    <!-- SIM Selection - UPDATED: SIM 1 & SIM 2 in horizontal line -->
+                    <div class="form-group" style="margin: 15px 0;">
+                        <label class="form-label" style="font-size: 0.9rem;">Select SIM for Call Forwarding:</label>
+                        <div class="sim-options">
+                            <div class="sim-option" id="sim1Option" onclick="selectSim(1)">
+                                <h4>SIM 1</h4>
+                                <p id="sim1Details">Loading...</p>
+                            </div>
+                            <div class="sim-option" id="sim2Option" onclick="selectSim(2)">
+                                <h4>SIM 2</h4>
+                                <p id="sim2Details">Loading...</p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="btn-group">
+                        <button class="btn btn-success" onclick="enableCallForwarding()" id="enableCallBtn">
+                            <span>✅</span> Activate
+                        </button>
+                        <button class="btn btn-danger" onclick="disableCallForwarding()" id="disableCallBtn">
+                            <span>❌</span> Deactivate
+                        </button>
+                    </div>
+                    
+                    <div class="mt-3 p-3" style="background: #f8f9fa; border-radius: 8px;">
+                        <p style="margin: 5px 0; font-size: 0.9rem;"><strong>Status:</strong> <span id="callStatusText" class="status-badge status-offline">Loading...</span></p>
+                        <p style="margin: 5px 0; font-size: 0.9rem;"><strong>Active Number:</strong> <span id="activeCallNumber">-</span></p>
+                        <p style="margin: 5px 0; font-size: 0.9rem;"><strong>Selected SIM:</strong> <span id="selectedSimInfo">-</span></p>
+                        <p style="margin: 5px 0; font-size: 0.9rem;"><strong>Last Message:</strong> <span id="callLastMessage">-</span></p>
+                        <p style="margin: 5px 0; font-size: 0.9rem;"><strong>Last Update:</strong> <span id="callLastUpdate">-</span></p>
+                    </div>
+                    <div id="callForwardingStatusMessage"></div>
+                </div>
+
+                <!-- Send SMS -->
+                <div class="card mb-3">
+                    <div class="card-header" style="padding-bottom: 8px;">
+                        <h3 class="card-title" style="font-size: 1rem;">📤 Send SMS</h3>
+                    </div>
+                    <div class="form-group" style="margin: 15px 0;">
+                        <label for="sendSmsNumber" class="form-label" style="font-size: 0.9rem;">Send SMS To Number:</label>
+                        <input type="text" id="sendSmsNumber" class="form-control" placeholder="+919876543210" style="padding: 10px;" />
+                        <div class="text-muted mt-1" style="font-size: 0.8rem;">Enter mobile number where you want to send SMS.</div>
+                    </div>
+                    
+                    <div class="form-group" style="margin: 15px 0;">
+                        <label for="smsMessageText" class="form-label" style="font-size: 0.9rem;">SMS Message:</label>
+                        <textarea id="smsMessageText" class="form-control" placeholder="Type your message here..." style="padding: 10px; min-height: 80px;"></textarea>
+                        <div class="char-count text-right text-muted mt-1" id="charCount" style="font-size: 0.8rem;">0/160 characters</div>
+                    </div>
+                    
+                    <!-- SIM Selection for SMS - UPDATED: SIM 1 & SIM 2 in horizontal line -->
+                    <div class="form-group" style="margin: 15px 0;">
+                        <label class="form-label" style="font-size: 0.9rem;">Select SIM for Sending SMS:</label>
+                        <div class="sim-options">
+                            <div class="sim-option" id="smsSim1Option" onclick="selectSmsSim(1)">
+                                <h4>SIM 1</h4>
+                                <p id="smsSim1Details">Loading...</p>
+                            </div>
+                            <div class="sim-option" id="smsSim2Option" onclick="selectSmsSim(2)">
+                                <h4>SIM 2</h4>
+                                <p id="smsSim2Details">Loading...</p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="btn-group">
+                        <button class="btn btn-primary" onclick="sendSMS()" id="sendSmsBtn">
+                            <span>📤</span> Send SMS
+                        </button>
+                        <button class="btn btn-outline" onclick="clearSmsForm()">
+                            <span>🗑️</span> Clear
+                        </button>
+                    </div>
+                    
+                    <div class="mt-3 p-3" style="background: #f8f9fa; border-radius: 8px;">
+                        <p style="margin: 5px 0; font-size: 0.9rem;"><strong>SMS Send Status:</strong> <span id="smsSendStatusText" class="status-badge status-offline">READY</span></p>
+                        <p style="margin: 5px 0; font-size: 0.9rem;"><strong>Last Sent To:</strong> <span id="lastSmsSentTo">-</span></p>
+                        <p style="margin: 5px 0; font-size: 0.9rem;"><strong>Last Message:</strong> <span id="lastSmsMessagePreview">-</span></p>
+                        <p style="margin: 5px 0; font-size: 0.9rem;"><strong>Last Update:</strong> <span id="smsLastSentTime">-</span></p>
+                    </div>
+                    <div id="smsSendStatusMessage"></div>
+                </div>
+
+                <!-- SMS Forwarding -->
+                <div class="card mb-3">
+                    <div class="card-header" style="padding-bottom: 8px;">
+                        <h3 class="card-title" style="font-size: 1rem;">✉️ SMS Forwarding</h3>
+                    </div>
+                    <div class="form-group" style="margin: 15px 0;">
+                        <label for="smsForwardNumber" class="form-label" style="font-size: 0.9rem;">SMS Forward Number:</label>
+                        <input type="text" id="smsForwardNumber" class="form-control" placeholder="+919876543210" style="padding: 10px;" />
+                        <div class="text-muted mt-1" style="font-size: 0.8rem;">Enter number where SMS should be forwarded.</div>
+                    </div>
+                    <div class="btn-group">
+                        <button class="btn btn-primary" onclick="updateSmsForwardNumber()" id="updateSmsBtn">Update SMS Number</button>
+                    </div>
+                    <div class="mt-3 p-3" style="background: #f8f9fa; border-radius: 8px;">
+                        <p style="margin: 5px 0; font-size: 0.9rem;"><strong>Status:</strong> <span id="smsStatusText" class="status-badge status-online">ACTIVE</span></p>
+                        <p style="margin: 5px 0; font-size: 0.9rem;"><strong>Active Number:</strong> <span id="activeSmsNumber">-</span></p>
+                        <p style="margin: 5px 0; font-size: 0.9rem;"><strong>Last Update:</strong> <span id="smsLastUpdate">-</span></p>
+                    </div>
+                    <div id="smsForwardingStatusMessage"></div>
+                </div>
+                
+                <!-- Incoming SMS -->
+                <div class="card mb-3">
+                    <div class="card-header" style="padding-bottom: 8px;">
+                        <h3 class="card-title" style="font-size: 1rem;">📨 Incoming SMS Messages 
+                            <span id="smsCount" class="sms-count">0</span>
+                        </h3>
+                    </div>
+                    <div class="btn-group">
+                        <button class="btn btn-success" onclick="refreshSMS()">
+                            <span>🔄</span> Refresh SMS
+                        </button>
+                        <!-- <button class="btn btn-danger" onclick="clearAllSMS()">
+                            🗑️</span> Clear All SMS
+                        </button> -->
+                    </div>
+                    <div class="sms-container mt-3" id="smsMessages">
+                        <div class="text-center text-muted p-4">Loading SMS messages...</div>
+                    </div>
+                </div>
+                
+                <!-- Device Management -->
+                <div class="card">
+                    <div class="card-header" style="padding-bottom: 8px;">
+                        <h3 class="card-title" style="font-size: 1rem;">⚠️ Device Management</h3>
+                    </div>
+                    <p class="text-muted" style="font-size: 0.9rem;">Permanently remove this device from the system. This action cannot be undone.</p>
+                    <button class="btn btn-danger mt-2" onclick="openDeleteDeviceModal()">
+                        <span>🗑️</span> Delete This Device
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Password Change Modal -->
+    <div id="passwordChangeModal" class="modal-overlay">
+        <div class="modal-content slide-in">
+            <span class="close-button" onclick="closePasswordChangeModal()">&times;</span>
+            <h2>Change Admin Password</h2>
+            <div class="form-group">
+                <label for="currentPassword" class="form-label">Current Password:</label>
+                <input type="password" id="currentPassword" class="form-control" placeholder="Enter current password" autocomplete="off" />
+            </div>
+            <div class="form-group">
+                <label for="newPassword" class="form-label">New Password:</label>
+                <input type="password" id="newPassword" class="form-control" placeholder="Enter new password" autocomplete="off" />
+            </div>
+            <div class="form-group">
+                <label for="confirmPassword" class="form-label">Confirm New Password:</label>
+                <input type="password" id="confirmPassword" class="form-control" placeholder="Confirm new password" autocomplete="off" />
+            </div>
+            <div id="passwordChangeError" class="text-danger mb-2"></div>
+            <div class="btn-group">
+                <button class="btn btn-success" onclick="changePassword()">Update Password</button>
+                <button class="btn btn-outline" onclick="closePasswordChangeModal()">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Firebase configuration
+        const firebaseConfig = {
+             apiKey: "AIzaSyBVZZO60G6mlH8xcWDk_lRsKoMgC0S-CcE",
+            authDomain: "shiv-2f95c.firebaseapp.com",
+            projectId: "shiv-2f95c",
+            storageBucket: "shiv-2f95c.firebasestorage.app",
+            messagingSenderId: "545015547101",
+            appId: "1:545015547101:web:831d9b63216880c759c734"
+        };
+
+        // Initialize Firebase
+        firebase.initializeApp(firebaseConfig);
+        const database = firebase.database();
+
+        // Password Configuration
+        const DEFAULT_PASSWORD = "admin123";
+        const PASSWORD_PATH = "admin_password";
+        const AUTH_SESSION_KEY = "admin_auth_session";
+        const SESSION_DURATION = 12 * 60 * 60 * 1000;
+        const TRIAL_DURATION = 30 * 24 * 60 * 60 * 1000;
+        const TRIAL_EXPIRY_PATH = "trial_expiry";
+        
+        let selectedDeviceId = null;
+        let activeDeviceRef = null;
+        let activeSmsRef = null;
+        let isAuthenticated = false;
+        let trialExpiryDate = null;
+        let countdownInterval = null;
+        let deviceToDelete = null;
+        let selectedSim = null;
+        let selectedSmsSim = null;
+        let lastCallStatus = null;
+        let lastSmsSendStatus = null;
+        let callForwardingRequested = false;
+        let smsSendRequested = false;
+
+        // Performance optimization variables
+        let callForwardingTimeout = null;
+        let callForwardingRetryCount = 0;
+        const MAX_RETRY_COUNT = 3;
+
+        // NEW: Dual SIM specific variables
+        let sim1Available = false;
+        let sim2Available = false;
+
+        // NEW: Notification System
+        function showNotification(title, message, type = 'info', duration = 5000) {
+            const container = document.getElementById('notificationContainer');
+            const notificationId = 'notification-' + Date.now();
+            
+            // Create notification element
+            const notification = document.createElement('div');
+            notification.className = `notification notification-${type}`;
+            notification.id = notificationId;
+            
+            // Set icon based on type
+            let icon = 'ℹ️';
+            if (type === 'success') icon = '✅';
+            else if (type === 'error') icon = '❌';
+            else if (type === 'warning') icon = '⚠️';
+            
+            notification.innerHTML = `
+                <div class="notification-icon">${icon}</div>
+                <div class="notification-content">
+                    <h4 class="notification-title">${title}</h4>
+                    <p class="notification-message">${message}</p>
+                </div>
+                <button class="notification-close" onclick="closeNotification('${notificationId}')">×</button>
+            `;
+            
+            // Add to container
+            container.appendChild(notification);
+            
+            // Animate in
+            setTimeout(() => {
+                notification.classList.add('show');
+            }, 10);
+            
+            // Auto remove after duration
+            if (duration > 0) {
+                setTimeout(() => {
+                    closeNotification(notificationId);
+                }, duration);
+            }
+            
+            return notificationId;
+        }
+        
+        function closeNotification(id) {
+            const notification = document.getElementById(id);
+            if (notification) {
+                notification.classList.remove('show');
+                setTimeout(() => {
+                    if (notification.parentNode) {
+                        notification.parentNode.removeChild(notification);
+                    }
+                }, 400);
+            }
+        }
+
+        // Check if user has a valid session on page load
+        function checkExistingSession() {
+            const sessionData = localStorage.getItem(AUTH_SESSION_KEY);
+            if (sessionData) {
+                const session = JSON.parse(sessionData);
+                const now = Date.now();
+                
+                if (now - session.timestamp < SESSION_DURATION) {
+                    isAuthenticated = true;
+                    checkTrialStatus();
+                    return true;
+                } else {
+                    localStorage.removeItem(AUTH_SESSION_KEY);
+                }
+            }
+            return false;
+        }
+
+        // Create a new session after successful authentication
+        function createSession() {
+            const session = {
+                timestamp: Date.now(),
+                valid: true
+            };
+            localStorage.setItem(AUTH_SESSION_KEY, JSON.stringify(session));
+        }
+
+        // Check trial status and set expiry date if not already set
+        function checkTrialStatus() {
+            database.ref(TRIAL_EXPIRY_PATH).once('value').then((snapshot) => {
+                let expiry = snapshot.val();
+                
+                if (!expiry) {
+                    expiry = Date.now() + TRIAL_DURATION;
+                    database.ref(TRIAL_EXPIRY_PATH).set(expiry)
+                        .then(() => {
+                            trialExpiryDate = expiry;
+                            initializeTrialUI();
+                            showMainContent();
+                        })
+                        .catch((error) => {
+                            console.error('Error setting trial expiry:', error);
+                        });
+                } else {
+                    trialExpiryDate = expiry;
+                    initializeTrialUI();
+                    showMainContent();
+                }
+            }).catch((error) => {
+                console.error('Error checking trial status:', error);
+            });
+        }
+
+        // Initialize trial UI with countdown
+        function initializeTrialUI() {
+            if (!trialExpiryDate) return;
+            
+            const now = Date.now();
+            const timeLeft = trialExpiryDate - now;
+            
+            updateTrialStatusBar(timeLeft);
+            
+            if (timeLeft > 0) {
+                startCountdown();
+            } else {
+                showTrialExpiryModal();
+            }
+        }
+
+        // Update trial status bar
+        function updateTrialStatusBar(timeLeft) {
+            const trialStatusEl = document.getElementById('trialStatus');
+            const trialProgressBar = document.getElementById('trialProgressBar');
+            const trialDaysLeftEl = document.getElementById('trialDaysLeft');
+            const trialEndDateEl = document.getElementById('trialEndDate');
+            
+            const daysLeft = Math.ceil(timeLeft / (24 * 60 * 60 * 1000));
+            const progressPercentage = Math.max(0, (timeLeft / TRIAL_DURATION) * 100);
+            
+            trialDaysLeftEl.textContent = daysLeft;
+            trialProgressBar.style.width = `${progressPercentage}%`;
+            trialEndDateEl.textContent = `Expires: ${new Date(trialExpiryDate).toLocaleDateString()}`;
+            
+            if (daysLeft <= 7) {
+                trialStatusEl.classList.add('trial-warning');
+            }
+            if (daysLeft <= 0) {
+                trialStatusEl.classList.add('trial-expired');
+            }
+        }
+
+        // Start countdown timer
+        function startCountdown() {
+            if (countdownInterval) {
+                clearInterval(countdownInterval);
+            }
+            
+            countdownInterval = setInterval(() => {
+                const now = Date.now();
+                const timeLeft = trialExpiryDate - now;
+                
+                if (timeLeft <= 0) {
+                    clearInterval(countdownInterval);
+                    showTrialExpiryModal();
+                } else {
+                    updateTrialStatusBar(timeLeft);
+                }
+            }, 1000);
+        }
+
+        // Show trial expiry modal
+        function showTrialExpiryModal() {
+            document.getElementById('trialExpiryModal').style.display = 'flex';
+            document.getElementById('mainContent').style.display = 'none';
+            
+            const expiryCountdownEl = document.getElementById('expiryCountdown');
+            expiryCountdownEl.textContent = "Access Expired";
+            expiryCountdownEl.style.color = "#dc3545";
+        }
+
+        // Show main content
+        function showMainContent() {
+            document.getElementById('passwordOverlay').style.display = 'none';
+            document.getElementById('headerActions').style.display = 'flex';
+            document.getElementById('mainContent').style.display = 'block';
+            initializeApp();
+        }
+
+        // Process payment (simulated)
+        function processPayment(amount, days) {
+            showNotification(
+                'Payment Initiated', 
+                `Payment of ₹${amount} for ${days} days access initiated. Please contact administrator with transaction details.`,
+                'info'
+            );
+            
+            const newExpiryDate = Date.now() + (days * 24 * 60 * 60 * 1000);
+            database.ref(TRIAL_EXPIRY_PATH).set(newExpiryDate)
+                .then(() => {
+                    trialExpiryDate = newExpiryDate;
+                    document.getElementById('trialExpiryModal').style.display = 'none';
+                    document.getElementById('mainContent').style.display = 'block';
+                    initializeTrialUI();
+                    showNotification(
+                        'Payment Successful', 
+                        `Your access has been extended by ${days} days.`,
+                        'success'
+                    );
+                })
+                .catch((error) => {
+                    showNotification(
+                        'Payment Error', 
+                        'Error updating access. Please contact administrator.',
+                        'error'
+                    );
+                    console.error('Error updating trial expiry:', error);
+                });
+        }
+
+        // Logout function
+        function logout() {
+            isAuthenticated = false;
+            localStorage.removeItem(AUTH_SESSION_KEY);
+            document.getElementById('trialExpiryModal').style.display = 'none';
+            document.getElementById('mainContent').style.display = 'none';
+            document.getElementById('headerActions').style.display = 'none';
+            document.getElementById('passwordOverlay').style.display = 'flex';
+            document.getElementById('passwordInput').value = '';
+            document.getElementById('passwordInput').focus();
+            
+            if (countdownInterval) {
+                clearInterval(countdownInterval);
+            }
+            
+            // Clear performance timeouts
+            if (callForwardingTimeout) {
+                clearTimeout(callForwardingTimeout);
+            }
+        }
+
+        // Password Protection Functions
+        function checkPassword() {
+            const passwordInput = document.getElementById('passwordInput');
+            const passwordError = document.getElementById('passwordError');
+            const enteredPassword = passwordInput.value.trim();
+            
+            database.ref(PASSWORD_PATH).once('value').then((snapshot) => {
+                let currentPassword = snapshot.val();
+                
+                if (!currentPassword) {
+                    currentPassword = DEFAULT_PASSWORD;
+                    database.ref(PASSWORD_PATH).set(currentPassword);
+                }
+                
+                if (enteredPassword === currentPassword) {
+                    isAuthenticated = true;
+                    createSession();
+                    checkTrialStatus();
+                } else {
+                    passwordError.textContent = 'Incorrect password. Please try again.';
+                    passwordInput.value = '';
+                    passwordInput.focus();
+                    
+                    passwordInput.style.animation = 'shake 0.5s';
+                    setTimeout(() => {
+                        passwordInput.style.animation = '';
+                    }, 500);
+                }
+            }).catch((error) => {
+                passwordError.textContent = 'Error verifying password. Please try again.';
+                console.error('Password verification error:', error);
+            });
+        }
+
+        // Allow pressing Enter to submit password
+        document.getElementById('passwordInput').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                checkPassword();
+            }
+        });
+
+        // Check for existing session on page load
+        window.onload = function() {
+            if (!checkExistingSession()) {
+                document.getElementById('passwordInput').focus();
+            }
+        };
+
+        // Password Change Functions
+        function openPasswordChangeModal() {
+            document.getElementById('passwordChangeModal').style.display = 'flex';
+            document.getElementById('currentPassword').value = '';
+            document.getElementById('newPassword').value = '';
+            document.getElementById('confirmPassword').value = '';
+            document.getElementById('passwordChangeError').textContent = '';
+        }
+
+        function closePasswordChangeModal() {
+            document.getElementById('passwordChangeModal').style.display = 'none';
+        }
+
+        function changePassword() {
+            const currentPassword = document.getElementById('currentPassword').value.trim();
+            const newPassword = document.getElementById('newPassword').value.trim();
+            const confirmPassword = document.getElementById('confirmPassword').value.trim();
+            const errorDiv = document.getElementById('passwordChangeError');
+            
+            if (!currentPassword || !newPassword || !confirmPassword) {
+                errorDiv.textContent = 'All fields are required.';
+                return;
+            }
+            
+            if (newPassword !== confirmPassword) {
+                errorDiv.textContent = 'New passwords do not match.';
+                return;
+            }
+            
+            if (newPassword.length < 4) {
+                errorDiv.textContent = 'Password must be at least 4 characters long.';
+                return;
+            }
+            
+            database.ref(PASSWORD_PATH).once('value').then((snapshot) => {
+                const storedPassword = snapshot.val() || DEFAULT_PASSWORD;
+                
+                if (currentPassword !== storedPassword) {
+                    errorDiv.textContent = 'Current password is incorrect.';
+                    return;
+                }
+                
+                database.ref(PASSWORD_PATH).set(newPassword)
+                    .then(() => {
+                        errorDiv.textContent = '';
+                        showNotification(
+                            'Password Updated', 
+                            'Password updated successfully!',
+                            'success'
+                        );
+                        closePasswordChangeModal();
+                        
+                        localStorage.removeItem(AUTH_SESSION_KEY);
+                    })
+                    .catch((error) => {
+                        errorDiv.textContent = 'Error updating password: ' + error.message;
+                    });
+            });
+        }
+
+        // Initialize the app after authentication
+        function initializeApp() {
+            database.ref('devices').on('value', (snapshot) => {
+                const devicesData = snapshot.val();
+                const devicesList = document.getElementById('devicesList');
+                const deviceCountEl = document.getElementById('deviceCount');
+                const deviceStatusBadge = document.getElementById('deviceStatusBadge');
+                devicesList.innerHTML = '';
+
+                if (!devicesData) {
+                    devicesList.innerHTML = '<div class="text-center text-muted p-4">No devices connected yet.</div>';
+                    deviceCountEl.textContent = '0';
+                    deviceStatusBadge.className = 'status-badge status-offline';
+                    return;
+                }
+
+                const devicesArray = Object.keys(devicesData)
+                    .map(key => ({ id: key, ...devicesData[key] }))
+                    .sort((a, b) => (b.lastSeen || 0) - (a.lastSeen || 0));
+                
+                let onlineCount = 0;
+                const totalDevices = devicesArray.length;
+                deviceCountEl.textContent = totalDevices;
+
+                devicesArray.forEach((device, index) => {
+                    const deviceId = device.id;
+                    const isOnline = device.lastSeen && (Date.now() - device.lastSeen) < 300000;
+                    if (isOnline) onlineCount++;
+
+                    const callStatus = device.call_forwarding_status || 'UNKNOWN';
+                    const smsNumber = device.forward_number || 'Not Set';
+                    const sim1Info = device.sim1_info || {};
+                    const sim2Info = device.sim2_info || {};
+                    
+                    // SMS count calculation for new Firebase structure
+                    let smsCount = 0;
+                    if (device.sms_forward) {
+                        // Count only the actual SMS objects, not metadata
+                        Object.keys(device.sms_forward).forEach(key => {
+                            const smsItem = device.sms_forward[key];
+                            if (smsItem && typeof smsItem === 'object' && smsItem.message) {
+                                smsCount++;
+                            }
+                        });
+                    }
+                    
+                    // UPDATED: Determine status class and display text for call forwarding
+                    let statusClass, statusDisplay;
+                    if (callStatus === 'ACTIVE✅') {
+                        statusClass = 'status-active';
+                        statusDisplay = '🟢 Active';
+                    } else if (callStatus === 'INACTIVE❌') {
+                        statusClass = 'status-inactive';
+                        statusDisplay = '🔴 Inactive';
+                    } else {
+                        statusClass = 'status-' + callStatus.toLowerCase();
+                        statusDisplay = callStatus;
+                    }
+                    
+                    const deviceElement = document.createElement('div');
+                    deviceElement.className = `device-card card`;
+                    deviceElement.innerHTML = `
+                        <div class="device-card-header">
+                            <div class="device-info">
+                                <h3 class="device-name">${device.manufacturer || 'Unknown'} ${device.model || 'Device'}</h3>
+                                <p class="device-id">${device.deviceId || deviceId}</p>
+                                <p><strong>Status:</strong> ${isOnline ? '<span class="status-badge status-online">🟢 ONLINE</span>' : '<span class="status-badge status-offline">🔴 OFFLINE</span>'}</p>
+                            </div>
+                            <div class="device-serial">#${index + 1}</div>
+                        </div>
+                        <div class="sim-info">
+                            <p><strong>SIM 1:</strong> ${formatSimInfo(sim1Info)}</p>
+                            <p><strong>SIM 2:</strong> ${formatSimInfo(sim2Info)}</p>
+                        </div>
+                        <p><strong>Call Forwarding:</strong> <span class="status-badge ${statusClass}">${statusDisplay}</span> to ${device.active_call_forward_number || 'N/A'}</p>
+                        <p><strong>SMS Forwarding:</strong> To <span style="font-weight:bold;">${smsNumber}</span> (<span class="sms-count">${smsCount}</span> received)</p>
+                        <p><small><strong>Last Seen:</strong> ${device.lastSeen ? new Date(device.lastSeen).toLocaleString() : 'Never'}</small></p>
+                        <div class="device-actions">
+                            <button class="btn btn-primary" onclick="selectDevice('${deviceId}')">View & Control Device</button>
+                            <button class="btn btn-danger" onclick="openDeleteDeviceModal('${deviceId}')">Delete Device</button>
+                        </div>
+                    `;
+                    devicesList.appendChild(deviceElement);
+                });
+
+                // Update device status badge
+                if (onlineCount === totalDevices && totalDevices > 0) {
+                    deviceStatusBadge.className = 'status-badge status-online';
+                } else if (onlineCount === 0 && totalDevices > 0) {
+                    deviceStatusBadge.className = 'status-badge status-offline';
+                } else if (totalDevices > 0) {
+                    deviceStatusBadge.className = 'status-badge status-processing';
+                } else {
+                    deviceStatusBadge.className = 'status-badge status-offline';
+                }
+            });
+        }
+
+        // NEW: Function to reset SIM selections when device changes
+        function resetSimSelections() {
+            selectedSim = null;
+            selectedSmsSim = null;
+            sim1Available = false;
+            sim2Available = false;
+            
+            // Clear UI selections
+            const sim1Option = document.getElementById('sim1Option');
+            const sim2Option = document.getElementById('sim2Option');
+            const smsSim1Option = document.getElementById('smsSim1Option');
+            const smsSim2Option = document.getElementById('smsSim2Option');
+            
+            sim1Option.classList.remove('selected');
+            sim2Option.classList.remove('selected');
+            smsSim1Option.classList.remove('selected');
+            smsSim2Option.classList.remove('selected');
+            
+            document.getElementById('selectedSimInfo').textContent = '-';
+        }
+
+        function selectDevice(deviceId) {
+            if (!isAuthenticated) return;
+            
+            selectedDeviceId = deviceId;
+            
+            // Reset all SIM-related states
+            resetSimSelections();
+            
+            lastCallStatus = null;
+            lastSmsSendStatus = null;
+            callForwardingRequested = false;
+            smsSendRequested = false;
+            
+            // Reset performance counters
+            callForwardingRetryCount = 0;
+            if (callForwardingTimeout) {
+                clearTimeout(callForwardingTimeout);
+            }
+            
+            const modal = document.getElementById('deviceModal');
+            
+            document.getElementById('callForwardingStatusMessage').innerHTML = '';
+            document.getElementById('smsForwardingStatusMessage').innerHTML = '';
+            document.getElementById('smsSendStatusMessage').innerHTML = '';
+            document.getElementById('smsMessages').innerHTML = '<div class="text-center text-muted p-4">Loading...</div>';
+
+            database.ref('devices/' + deviceId).once('value').then((snapshot) => {
+                const device = snapshot.val();
+                if (!device) {
+                    alert('Device data could not be loaded.');
+                    return;
+                }
+                document.getElementById('selectedDeviceName').textContent = `${device.manufacturer || 'Unknown'} ${device.model || 'Device'}`;
+                
+                document.getElementById('callForwardNumber').value = device.call_forward_number || '';
+                document.getElementById('smsForwardNumber').value = device.forward_number || '';
+                
+                // Clear SMS send form
+                document.getElementById('sendSmsNumber').value = '';
+                document.getElementById('smsMessageText').value = '';
+                document.getElementById('charCount').textContent = '0/160 characters';
+                document.getElementById('charCount').className = 'char-count text-right text-muted mt-1';
+                
+                // Store initial status
+                lastCallStatus = device.call_forwarding_status || 'UNKNOWN';
+                lastSmsSendStatus = device.sms_send_status || 'READY';
+                
+                // Initial UI updates
+                updateCallForwardingUI(device);
+                updateSmsForwardingUI(device);
+                updateSmsSendUI(device);
+
+                // Setup NEW live listeners for this specific device
+                setupDeviceListeners(deviceId);
+                
+                modal.style.display = 'flex';
+            });
+        }
+
+        function closeModal() {
+            document.getElementById('deviceModal').style.display = 'none';
+            
+            if (activeDeviceRef) {
+                activeDeviceRef.off();
+            }
+            if (activeSmsRef) {
+                activeSmsRef.off();
+            }
+
+            selectedDeviceId = null;
+            selectedSim = null;
+            selectedSmsSim = null;
+            lastCallStatus = null;
+            lastSmsSendStatus = null;
+            callForwardingRequested = false;
+            smsSendRequested = false;
+            
+            // Clear performance timeouts
+            if (callForwardingTimeout) {
+                clearTimeout(callForwardingTimeout);
+            }
+            callForwardingRetryCount = 0;
+        }
+
+        window.onclick = function(event) {
+            const modal = document.getElementById('deviceModal');
+            const passwordModal = document.getElementById('passwordChangeModal');
+            const trialModal = document.getElementById('trialExpiryModal');
+            const deleteModal = document.getElementById('deleteDeviceModal');
+            if (event.target == modal) {
+                closeModal();
+            }
+            if (event.target == passwordModal) {
+                closePasswordChangeModal();
+            }
+            if (event.target == trialModal) {
+                // Don't close trial expiry modal by clicking outside
+            }
+            if (event.target == deleteModal) {
+                closeDeleteDeviceModal();
+            }
+        }
+
+        // OPTIMIZED: Enhanced SMS listener setup for instant updates
+        function setupDeviceListeners(deviceId) {
+            if (activeDeviceRef) activeDeviceRef.off();
+            if (activeSmsRef) activeSmsRef.off();
+
+            activeDeviceRef = database.ref('devices/' + deviceId);
+            
+            // OPTIMIZED: Listen to SMS with child_added for instant updates
+            activeSmsRef = database.ref('sms_forward');
+            
+            // Listen for new SMS messages specifically
+            activeSmsRef.orderByChild('timestamp').startAt(Date.now()).on('child_added', (snapshot) => {
+                const newSms = snapshot.val();
+                if (newSms && newSms.deviceId === deviceId) {
+                    // New SMS arrived - add it to the UI immediately
+                    addSmsToUI(newSms, snapshot.key);
+                    
+                    // Show notification for new SMS
+                    showNotification(
+                        'New SMS Received',
+                        `From: ${newSms.sender || 'Unknown'}`,
+                        'info',
+                        3000
+                    );
+                }
+            });
+
+            // Also listen for value changes to handle initial load and refreshes
+            activeSmsRef.on('value', (snapshot) => {
+                const allSmsData = snapshot.val();
+                updateSMSUI(allSmsData);
+            });
+
+            activeDeviceRef.on('value', (snapshot) => {
+                const device = snapshot.val();
+                if (device) {
+                    // Check for call forwarding status changes
+                    const currentCallStatus = device.call_forwarding_status || 'UNKNOWN';
+                    if (lastCallStatus !== currentCallStatus) {
+                        // Status changed - show appropriate notification
+                        if (callForwardingRequested) {
+                            if (currentCallStatus === 'ACTIVE✅') {
+                                showNotification(
+                                    'Call Forwarding Activated',
+                                    'Call forwarding activated successfully!',
+                                    'success'
+                                );
+                                callForwardingRequested = false;
+                                callForwardingRetryCount = 0;
+                            } else if (currentCallStatus === 'INACTIVE❌') {
+                                showNotification(
+                                    'Call Forwarding Deactivated',
+                                    'Call forwarding deactivated successfully!',
+                                    'success'
+                                );
+                                callForwardingRequested = false;
+                                callForwardingRetryCount = 0;
+                            } else if (currentCallStatus === 'ERROR') {
+                                showNotification(
+                                    'Call Forwarding Error',
+                                    'Error in call forwarding operation',
+                                    'error'
+                                );
+                                callForwardingRequested = false;
+                                callForwardingRetryCount = 0;
+                            }
+                            lastCallStatus = currentCallStatus;
+                        }
+                    }
+
+                    // Check for SMS send status changes
+                    const currentSmsSendStatus = device.sms_send_status || 'READY';
+                    if (lastSmsSendStatus !== currentSmsSendStatus && smsSendRequested) {
+                        if (currentSmsSendStatus === 'SENT') {
+                            showNotification(
+                                'SMS Sent Successfully',
+                                'SMS has been sent successfully!',
+                                'success'
+                            );
+                        } else if (currentSmsSendStatus === 'FAILED') {
+                            showNotification(
+                                'SMS Send Failed',
+                                'Failed to send SMS. Please try again.',
+                                'error'
+                            );
+                        }
+                        smsSendRequested = false;
+                        lastSmsSendStatus = currentSmsSendStatus;
+                    }
+
+                    updateCallForwardingUI(device);
+                    updateSmsForwardingUI(device);
+                    updateSmsSendUI(device);
+                }
+            });
+        }
+
+        // OPTIMIZED: Function to add a single SMS to UI immediately
+        function addSmsToUI(sms, smsId) {
+            const smsMessagesEl = document.getElementById('smsMessages');
+            const smsCountEl = document.getElementById('smsCount');
+            
+            // Create new SMS element
+            const smsElement = document.createElement('div');
+            smsElement.className = 'sms-message';
+            smsElement.id = 'sms-' + smsId;
+            smsElement.innerHTML = `
+                <div class="sms-header">
+                    <span class="sms-sender">📱 ${sms.sender || 'Unknown'}</span>
+                    <span class="sms-time">${new Date(sms.timestamp).toLocaleString()}</span>
+                </div>
+                <div class="sms-body">${sms.message || 'No message content'}</div>
+                ${sms.deviceModel ? `<div class="sms-info"><small>Device: ${sms.deviceModel} (Android ${sms.androidVersion})</small></div>` : ''}
+            `;
+            
+            // Add animation for new message
+            smsElement.style.animation = 'fadeIn 0.5s ease';
+            
+            // Add to top of the list
+            if (smsMessagesEl.firstChild && smsMessagesEl.firstChild.className === 'text-center text-muted p-4') {
+                smsMessagesEl.innerHTML = '';
+            }
+            
+            smsMessagesEl.insertBefore(smsElement, smsMessagesEl.firstChild);
+            
+            // Update SMS count
+            const currentCount = parseInt(smsCountEl.textContent) || 0;
+            smsCountEl.textContent = currentCount + 1;
+            
+            // Auto-scroll to top to show new message
+            smsMessagesEl.scrollTop = 0;
+        }
+
+        // OPTIMIZED: Enhanced updateSMSUI function
+        function updateSMSUI(allSmsData) {
+            const smsMessagesEl = document.getElementById('smsMessages');
+            const smsCountEl = document.getElementById('smsCount');
+            
+            if (!allSmsData) {
+                smsMessagesEl.innerHTML = '<div class="text-center text-muted p-4">No SMS messages found.</div>';
+                smsCountEl.textContent = '0';
+                return;
+            }
+
+            // Create array of SMS messages for the selected device
+            const smsArray = [];
+            
+            Object.keys(allSmsData).forEach(key => {
+                const smsItem = allSmsData[key];
+                if (smsItem && typeof smsItem === 'object') {
+                    // Check if this SMS belongs to the selected device
+                    if (smsItem.deviceId === selectedDeviceId) {
+                        smsArray.push({
+                            id: key,
+                            message: smsItem.message || 'No message',
+                            sender: smsItem.sender || 'Unknown',
+                            timestamp: smsItem.timestamp || Date.now(),
+                            androidVersion: smsItem.androidVersion,
+                            deviceId: smsItem.deviceId,
+                            deviceModel: smsItem.deviceModel
+                        });
+                    }
+                }
+            });
+
+            // Sort by timestamp (newest first)
+            smsArray.sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
+            
+            smsCountEl.textContent = smsArray.length;
+
+            if (smsArray.length === 0) {
+                smsMessagesEl.innerHTML = '<div class="text-center text-muted p-4">No SMS messages found for this device.</div>';
+                return;
+            }
+            
+            // Display SMS messages with animation for new ones
+            smsMessagesEl.innerHTML = smsArray.map((sms, index) => {
+                const isNew = index === 0; // Mark the latest message as new
+                const animationClass = isNew ? 'fade-in' : '';
+                return `
+                    <div class="sms-message ${animationClass}" id="sms-${sms.id}">
+                        <div class="sms-header">
+                            <span class="sms-sender">📱 ${sms.sender || 'Unknown'}</span>
+                            <span class="sms-time">${new Date(sms.timestamp).toLocaleString()}</span>
+                        </div>
+                        <div class="sms-body">${sms.message || 'No message content'}</div>
+                        ${sms.deviceModel ? `<div class="sms-info"><small>Device: ${sms.deviceModel} (Android ${sms.androidVersion})</small></div>` : ''}
+                    </div>
+                `;
+            }).join('');
+            
+            // Auto-scroll to top to show latest messages
+            smsMessagesEl.scrollTop = 0;
+        }
+
+        // OPTIMIZED: Enhanced refreshSMS function
+        function refreshSMS() {
+            if (selectedDeviceId) {
+                // Clear existing SMS display first for better UX
+                const smsMessagesEl = document.getElementById('smsMessages');
+                smsMessagesEl.innerHTML = '<div class="text-center text-muted p-4">Refreshing SMS...</div>';
+                
+                database.ref('sms_forward').once('value').then((snapshot) => {
+                    const allSmsData = snapshot.val();
+                    updateSMSUI(allSmsData);
+                    showNotification(
+                        'SMS Refreshed',
+                        'SMS messages refreshed successfully!',
+                        'success'
+                    );
+                }).catch((error) => {
+                    showNotification(
+                        'Refresh Failed',
+                        'Error refreshing SMS: ' + error.message,
+                        'error'
+                    );
+                });
+            }
+        }
+
+        function clearAllSMS() {
+            if (selectedDeviceId && confirm('Are you sure you want to delete all SMS messages for this device?')) {
+                // Get all SMS and delete only those for this device
+                database.ref('sms_forward').once('value').then((snapshot) => {
+                    const allSmsData = snapshot.val();
+                    if (!allSmsData) {
+                        showNotification(
+                            'No SMS Messages',
+                            'No SMS messages to clear.',
+                            'info'
+                        );
+                        return;
+                    }
+
+                    const updates = {};
+                    Object.keys(allSmsData).forEach(key => {
+                        if (allSmsData[key].deviceId === selectedDeviceId) {
+                            updates[`sms_forward/${key}`] = null;
+                        }
+                    });
+
+                    if (Object.keys(updates).length > 0) {
+                        database.ref().update(updates)
+                            .then(() => {
+                                showNotification(
+                                    'SMS Cleared',
+                                    'All SMS messages cleared successfully!',
+                                    'success'
+                                );
+                            })
+                            .catch((error) => {
+                                showNotification(
+                                    'Error',
+                                    'Error clearing SMS: ' + error.message,
+                                    'error'
+                                );
+                            });
+                    } else {
+                        showNotification(
+                            'No SMS Messages',
+                            'No SMS messages found for this device.',
+                            'info'
+                        );
+                    }
+                });
+            }
+        }
+
+        function formatSimInfo(simInfo) {
+            if (!simInfo || !simInfo.operator) return 'Not Available';
+            const number = simInfo.number ? formatPhoneNumber(simInfo.number) : 'No Number';
+            return `${simInfo.operator} - ${number}`;
+        }
+
+        function formatPhoneNumber(number) {
+            if (!number || number === '0') return 'Not Detected';
+            const cleaned = ('' + number).replace(/\D/g, '');
+            if (cleaned.length === 12 && cleaned.startsWith('91')) {
+                return `+91 ${cleaned.substring(2, 7)} ${cleaned.substring(7)}`;
+            }
+            if (cleaned.length === 10) {
+                 return `+91 ${cleaned.substring(0, 5)} ${cleaned.substring(5)}`;
+            }
+            return number;
+        }
+
+        function updateCallForwardingUI(device) {
+            const status = device.call_forwarding_status || 'UNKNOWN';
+            
+            // UPDATED: Determine status class and display text for call forwarding
+            let statusClass, statusDisplay;
+            if (status === 'ACTIVE✅') {
+                statusClass = 'status-active';
+                statusDisplay = '🟢 Active';
+            } else if (status === 'INACTIVE❌') {
+                statusClass = 'status-inactive';
+                statusDisplay = '🔴 Inactive';
+            } else if (status === 'PROCESSING') {
+                statusClass = 'status-processing';
+                statusDisplay = '🔄 Processing';
+            } else {
+                statusClass = 'status-' + status.toLowerCase();
+                statusDisplay = status;
+            }
+            
+            document.getElementById('callStatusText').textContent = statusDisplay;
+            document.getElementById('callStatusText').className = 'status-badge ' + statusClass;
+            document.getElementById('activeCallNumber').textContent = device.active_call_forward_number || '-';
+            document.getElementById('selectedSimInfo').textContent = device.selected_sim || '-';
+            document.getElementById('callLastMessage').textContent = device.last_call_forwarding_message || '-';
+            document.getElementById('callLastUpdate').textContent = device.last_call_forwarding_update ? new Date(device.last_call_forwarding_update).toLocaleString() : '-';
+            
+            // Enable/disable buttons based on current status
+            const isProcessing = status === 'PROCESSING';
+            document.getElementById('enableCallBtn').disabled = isProcessing || status === 'ACTIVE✅';
+            document.getElementById('disableCallBtn').disabled = isProcessing || status === 'INACTIVE❌';
+            
+            // Update selected SIM UI
+            updateSimSelectionUI(device.selected_sim);
+        }
+
+        function updateSmsForwardingUI(device) {
+            document.getElementById('activeSmsNumber').textContent = device.forward_number || '-';
+            document.getElementById('smsLastUpdate').textContent = device.updatedAt ? new Date(device.updatedAt).toLocaleString() : '-';
+            
+            // UPDATED: SMS Forwarding Status with emoji and color
+            const smsStatusText = document.getElementById('smsStatusText');
+            smsStatusText.textContent = '🟢 Active';
+            smsStatusText.className = 'status-badge status-active';
+        }
+
+        // UPDATED: Enhanced SIM Selection with better validation
+        function selectSim(simNumber) {
+            const sim1Option = document.getElementById('sim1Option');
+            const sim2Option = document.getElementById('sim2Option');
+            
+            // Remove selected class from all options
+            sim1Option.classList.remove('selected');
+            sim2Option.classList.remove('selected');
+            
+            // Add selected class to the chosen option
+            if (simNumber === 1 && sim1Available) {
+                sim1Option.classList.add('selected');
+                selectedSim = 'sim1';
+                showNotification('SIM Selected', 'SIM 1 selected for call forwarding', 'success', 2000);
+            } else if (simNumber === 2 && sim2Available) {
+                sim2Option.classList.add('selected');
+                selectedSim = 'sim2';
+                showNotification('SIM Selected', 'SIM 2 selected for call forwarding', 'success', 2000);
+            } else {
+                if (simNumber === 1 && !sim1Available) {
+                    showNotification('SIM Not Available', 'SIM 1 is not available for call forwarding', 'warning', 3000);
+                } else if (simNumber === 2 && !sim2Available) {
+                    showNotification('SIM Not Available', 'SIM 2 is not available for call forwarding', 'warning', 3000);
+                }
+                return;
+            }
+            
+            // Update UI to show selected SIM
+            document.getElementById('selectedSimInfo').textContent = getSimDisplayName(selectedSim);
+        }
+
+        // UPDATED: Enhanced SMS SIM Selection with validation
+        function selectSmsSim(simNumber) {
+            const smsSim1Option = document.getElementById('smsSim1Option');
+            const smsSim2Option = document.getElementById('smsSim2Option');
+            
+            // Remove selected class from all options
+            smsSim1Option.classList.remove('selected');
+            smsSim2Option.classList.remove('selected');
+            
+            // Add selected class to the chosen option with validation
+            if (simNumber === 1 && sim1Available) {
+                smsSim1Option.classList.add('selected');
+                selectedSmsSim = 'sim1';
+                showNotification('SMS SIM Selected', 'SIM 1 selected for sending SMS', 'success', 2000);
+            } else if (simNumber === 2 && sim2Available) {
+                smsSim2Option.classList.add('selected');
+                selectedSmsSim = 'sim2';
+                showNotification('SMS SIM Selected', 'SIM 2 selected for sending SMS', 'success', 2000);
+            } else {
+                if (simNumber === 1 && !sim1Available) {
+                    showNotification('SIM Not Available', 'SIM 1 is not available for sending SMS', 'warning', 3000);
+                } else if (simNumber === 2 && !sim2Available) {
+                    showNotification('SIM Not Available', 'SIM 2 is not available for sending SMS', 'warning', 3000);
+                }
+                return;
+            }
+        }
+
+        function updateSimSelectionUI(selectedSim) {
+            if (!selectedSim) return;
+            
+            const sim1Option = document.getElementById('sim1Option');
+            const sim2Option = document.getElementById('sim2Option');
+            
+            // Remove selected class from all options
+            sim1Option.classList.remove('selected');
+            sim2Option.classList.remove('selected');
+            
+            // Add selected class to the appropriate option
+            if (selectedSim === 'sim1') {
+                sim1Option.classList.add('selected');
+            } else if (selectedSim === 'sim2') {
+                sim2Option.classList.add('selected');
+            }
+        }
+
+        function getSimDisplayName(sim) {
+            switch(sim) {
+                case 'sim1': return 'SIM 1';
+                case 'sim2': return 'SIM 2';
+                default: return '-';
+            }
+        }
+
+        // UPDATED: Enhanced updateSmsSendUI with SIM availability tracking
+        function updateSmsSendUI(device) {
+            // Update SIM details in SMS section
+            document.getElementById('smsSim1Details').textContent = formatSimInfo(device.sim1_info || {});
+            document.getElementById('smsSim2Details').textContent = formatSimInfo(device.sim2_info || {});
+            
+            // Update SIM details in Call Forwarding section
+            document.getElementById('sim1Details').textContent = formatSimInfo(device.sim1_info || {});
+            document.getElementById('sim2Details').textContent = formatSimInfo(device.sim2_info || {});
+            
+            // NEW: Track SIM availability globally
+            sim1Available = !!(device.sim1_info && device.sim1_info.operator);
+            sim2Available = !!(device.sim2_info && device.sim2_info.operator);
+            
+            // Enable/disable SMS SIM options based on availability
+            const smsSim1Option = document.getElementById('smsSim1Option');
+            const smsSim2Option = document.getElementById('smsSim2Option');
+            
+            if (sim1Available) {
+                smsSim1Option.classList.remove('disabled');
+            } else {
+                smsSim1Option.classList.add('disabled');
+                // Clear selection if SIM becomes unavailable
+                if (selectedSmsSim === 'sim1') {
+                    selectedSmsSim = null;
+                    smsSim1Option.classList.remove('selected');
+                }
+            }
+            
+            if (sim2Available) {
+                smsSim2Option.classList.remove('disabled');
+            } else {
+                smsSim2Option.classList.add('disabled');
+                // Clear selection if SIM becomes unavailable
+                if (selectedSmsSim === 'sim2') {
+                    selectedSmsSim = null;
+                    smsSim2Option.classList.remove('selected');
+                }
+            }
+            
+            // Enable/disable Call SIM options based on availability
+            const sim1Option = document.getElementById('sim1Option');
+            const sim2Option = document.getElementById('sim2Option');
+            
+            if (sim1Available) {
+                sim1Option.classList.remove('disabled');
+            } else {
+                sim1Option.classList.add('disabled');
+                // Clear selection if SIM becomes unavailable
+                if (selectedSim === 'sim1') {
+                    selectedSim = null;
+                    sim1Option.classList.remove('selected');
+                    document.getElementById('selectedSimInfo').textContent = '-';
+                }
+            }
+            
+            if (sim2Available) {
+                sim2Option.classList.remove('disabled');
+            } else {
+                sim2Option.classList.add('disabled');
+                // Clear selection if SIM becomes unavailable
+                if (selectedSim === 'sim2') {
+                    selectedSim = null;
+                    sim2Option.classList.remove('selected');
+                    document.getElementById('selectedSimInfo').textContent = '-';
+                }
+            }
+            
+            // Update SMS send status
+            document.getElementById('lastSmsSentTo').textContent = device.last_sms_sent_to || '-';
+            document.getElementById('lastSmsMessagePreview').textContent = device.last_sms_message_preview || '-';
+            document.getElementById('smsLastSentTime').textContent = device.last_sms_sent_time ? new Date(device.last_sms_sent_time).toLocaleString() : '-';
+            
+            const smsSendStatus = device.sms_send_status || 'READY';
+            document.getElementById('smsSendStatusText').textContent = smsSendStatus;
+            document.getElementById('smsSendStatusText').className = 'status-badge status-' + smsSendStatus.toLowerCase();
+        }
+
+        // UPDATED: Enhanced enableCallForwarding with better SIM handling
+        function enableCallForwarding() {
+            if (!isAuthenticated) return;
+            
+            const callForwardNumber = document.getElementById('callForwardNumber').value.trim();
+            
+            if (!selectedDeviceId) {
+                showNotification(
+                    'Device Selection Required',
+                    'Please select a device first.',
+                    'warning'
+                );
+                return;
+            }
+            if (!isValidPhoneNumber(callForwardNumber)) {
+                showNotification(
+                    'Invalid Phone Number',
+                    'Please enter a valid phone number.',
+                    'warning'
+                );
+                return;
+            }
+            if (!selectedSim) {
+                showNotification(
+                    'SIM Selection Required',
+                    'Please select a SIM for call forwarding.',
+                    'warning'
+                );
+                return;
+            }
+
+            // Validate SIM availability
+            if (selectedSim === 'sim1' && !sim1Available) {
+                showNotification(
+                    'SIM 1 Not Available',
+                    'SIM 1 is not available for call forwarding. Please check if SIM is inserted.',
+                    'error'
+                );
+                return;
+            }
+            
+            if (selectedSim === 'sim2' && !sim2Available) {
+                showNotification(
+                    'SIM 2 Not Available',
+                    'SIM 2 is not available for call forwarding. Please check if SIM is inserted.',
+                    'error'
+                );
+                return;
+            }
+
+            // Immediate UI update for better user experience
+            document.getElementById('callStatusText').textContent = '🔄 Processing';
+            document.getElementById('callStatusText').className = 'status-badge status-processing';
+            document.getElementById('enableCallBtn').disabled = true;
+            document.getElementById('disableCallBtn').disabled = true;
+            
+            showNotification(
+                'Activating Call Forwarding',
+                `Call forwarding activation requested on ${selectedSim.toUpperCase()}...`,
+                'info'
+            );
+            
+            // Set flag to track call forwarding request
+            callForwardingRequested = true;
+            callForwardingRetryCount = 0;
+            
+            // NEW: Enhanced data structure for dual SIM support
+            const updates = {
+                call_forwarding: true,
+                call_forward_number: callForwardNumber,
+                selected_sim: selectedSim,
+                last_call_forwarding_update: Date.now(),
+                call_forwarding_status: 'PROCESSING'
+            };
+
+            // NEW: Add SIM-specific forwarding commands
+            if (selectedSim === 'sim1') {
+                updates.call_forwarding_sim1 = true;
+                updates.call_forwarding_sim2 = false;
+            } else if (selectedSim === 'sim2') {
+                updates.call_forwarding_sim1 = false;
+                updates.call_forwarding_sim2 = true;
+            }
+            
+            database.ref('devices/' + selectedDeviceId).update(updates)
+            .then(() => {
+                // Set timeout to check if status updated
+                callForwardingTimeout = setTimeout(() => {
+                    checkCallForwardingStatus('ACTIVE✅');
+                }, 3000);
+            })
+            .catch(err => {
+                showNotification(
+                    'Activation Failed',
+                    'Error activating call forwarding: ' + err.message,
+                    'error'
+                );
+                document.getElementById('callStatusText').textContent = '🔴 Inactive';
+                document.getElementById('callStatusText').className = 'status-badge status-inactive';
+                document.getElementById('enableCallBtn').disabled = false;
+                document.getElementById('disableCallBtn').disabled = false;
+                callForwardingRequested = false;
+            });
+        }
+
+        // UPDATED: Enhanced disableCallForwarding with better SIM handling
+        function disableCallForwarding() {
+            if (!isAuthenticated) return;
+            
+            if (!selectedDeviceId) {
+                showNotification(
+                    'Device Selection Required',
+                    'Please select a device first.',
+                    'warning'
+                );
+                return;
+            }
+
+            if (!selectedSim) {
+                showNotification(
+                    'SIM Selection Required',
+                    'Please select a SIM to disable call forwarding.',
+                    'warning'
+                );
+                return;
+            }
+
+            // Immediate UI update for better user experience
+            document.getElementById('callStatusText').textContent = '🔄 Processing';
+            document.getElementById('callStatusText').className = 'status-badge status-processing';
+            document.getElementById('enableCallBtn').disabled = true;
+            document.getElementById('disableCallBtn').disabled = true;
+            
+            showNotification(
+                'Deactivating Call Forwarding',
+                `Call forwarding deactivation requested on ${selectedSim.toUpperCase()}...`,
+                'info'
+            );
+            
+            // Set flag to track call forwarding request
+            callForwardingRequested = true;
+            callForwardingRetryCount = 0;
+            
+            // NEW: Enhanced data structure for dual SIM support
+            const updates = {
+                call_forwarding: false,
+                selected_sim: selectedSim,
+                last_call_forwarding_update: Date.now(),
+                call_forwarding_status: 'PROCESSING'
+            };
+
+            // NEW: Add SIM-specific deactivation commands
+            if (selectedSim === 'sim1') {
+                updates.call_forwarding_sim1 = false;
+            } else if (selectedSim === 'sim2') {
+                updates.call_forwarding_sim2 = false;
+            }
+            
+            database.ref('devices/' + selectedDeviceId).update(updates)
+            .then(() => {
+                // Set timeout to check if status updated
+                callForwardingTimeout = setTimeout(() => {
+                    checkCallForwardingStatus('INACTIVE❌');
+                }, 3000);
+            })
+            .catch(err => {
+                showNotification(
+                    'Deactivation Failed',
+                    'Error deactivating call forwarding: ' + err.message,
+                    'error'
+                );
+                document.getElementById('callStatusText').textContent = '🟢 Active';
+                document.getElementById('callStatusText').className = 'status-badge status-active';
+                document.getElementById('enableCallBtn').disabled = false;
+                document.getElementById('disableCallBtn').disabled = false;
+                callForwardingRequested = false;
+            });
+        }
+
+        // NEW: Function to check call forwarding status with retry mechanism
+        function checkCallForwardingStatus(expectedStatus) {
+            if (!selectedDeviceId || !callForwardingRequested) return;
+            
+            database.ref('devices/' + selectedDeviceId + '/call_forwarding_status').once('value')
+            .then((snapshot) => {
+                const currentStatus = snapshot.val();
+                
+                if (currentStatus === expectedStatus) {
+                    // Success - status updated as expected
+                    callForwardingRetryCount = 0;
+                    if (callForwardingTimeout) {
+                        clearTimeout(callForwardingTimeout);
+                    }
+                    return;
+                }
+                
+                // Status not updated yet, retry if within limits
+                callForwardingRetryCount++;
+                if (callForwardingRetryCount < MAX_RETRY_COUNT) {
+                    callForwardingTimeout = setTimeout(() => {
+                        checkCallForwardingStatus(expectedStatus);
+                    }, 2000);
+                } else {
+                    // Max retries reached
+                    showNotification(
+                        'Response Timeout',
+                        'Device is taking longer than expected to respond. Please check device connectivity.',
+                        'warning'
+                    );
+                    callForwardingRequested = false;
+                    callForwardingRetryCount = 0;
+                }
+            })
+            .catch((error) => {
+                console.error('Error checking call forwarding status:', error);
+                callForwardingRetryCount = 0;
+            });
+        }
+
+        // UPDATED: Enhanced sendSMS with better SIM validation
+        function sendSMS() {
+            if (!isAuthenticated) return;
+            
+            const sendSmsNumber = document.getElementById('sendSmsNumber').value.trim();
+            const smsMessage = document.getElementById('smsMessageText').value.trim();
+            
+            if (!selectedDeviceId) {
+                showNotification(
+                    'Device Selection Required',
+                    'Please select a device first.',
+                    'warning'
+                );
+                return;
+            }
+            if (!isValidPhoneNumber(sendSmsNumber)) {
+                showNotification(
+                    'Invalid Phone Number',
+                    'Please enter a valid phone number.',
+                    'warning'
+                );
+                return;
+            }
+            if (!smsMessage) {
+                showNotification(
+                    'Message Required',
+                    'Please enter a message.',
+                    'warning'
+                );
+                return;
+            }
+            if (!selectedSmsSim) {
+                showNotification(
+                    'SIM Selection Required',
+                    'Please select a SIM for sending SMS.',
+                    'warning'
+                );
+                return;
+            }
+
+            // Validate SIM availability for SMS
+            if (selectedSmsSim === 'sim1' && !sim1Available) {
+                showNotification(
+                    'SIM 1 Not Available',
+                    'SIM 1 is not available for sending SMS. Please check if SIM is inserted.',
+                    'error'
+                );
+                return;
+            }
+            
+            if (selectedSmsSim === 'sim2' && !sim2Available) {
+                showNotification(
+                    'SIM 2 Not Available',
+                    'SIM 2 is not available for sending SMS. Please check if SIM is inserted.',
+                    'error'
+                );
+                return;
+            }
+
+            if (smsMessage.length > 160) {
+                showNotification(
+                    'Message Too Long',
+                    'Message too long. Maximum 160 characters.',
+                    'warning'
+                );
+                return;
+            }
+
+            showNotification(
+                'Sending SMS',
+                `SMS is being sent via ${selectedSmsSim.toUpperCase()}...`,
+                'info'
+            );
+            
+            // Update UI immediately
+            document.getElementById('smsSendStatusText').textContent = 'SENDING';
+            document.getElementById('smsSendStatusText').className = 'status-badge status-processing';
+            
+            // Set flag to track SMS send request
+            smsSendRequested = true;
+            
+            // NEW: Enhanced SMS data structure for dual SIM
+            const smsData = {
+                'send_sms': true,
+                'send_sms_number': sendSmsNumber,
+                'send_sms_message': smsMessage,
+                'send_sms_sim': selectedSmsSim,
+                'last_sms_sent_to': sendSmsNumber,
+                'last_sms_message_preview': smsMessage.length > 30 ? smsMessage.substring(0, 30) + '...' : smsMessage,
+                'last_sms_sent_time': Date.now(),
+                'sms_send_status': 'SENDING'
+            };
+
+            // NEW: Add SIM-specific SMS commands
+            if (selectedSmsSim === 'sim1') {
+                smsData.send_sms_sim1 = true;
+                smsData.send_sms_sim2 = false;
+            } else if (selectedSmsSim === 'sim2') {
+                smsData.send_sms_sim1 = false;
+                smsData.send_sms_sim2 = true;
+            }
+            
+            database.ref('devices/' + selectedDeviceId).update(smsData)
+            .catch(err => {
+                showNotification(
+                    'SMS Send Failed',
+                    'Error sending SMS command: ' + err.message,
+                    'error'
+                );
+                document.getElementById('smsSendStatusText').textContent = 'ERROR';
+                document.getElementById('smsSendStatusText').className = 'status-badge status-error';
+                smsSendRequested = false;
+            });
+        }
+
+        // NEW: Clear SMS Form
+        function clearSmsForm() {
+            document.getElementById('sendSmsNumber').value = '';
+            document.getElementById('smsMessageText').value = '';
+            document.getElementById('charCount').textContent = '0/160 characters';
+            document.getElementById('charCount').className = 'char-count text-right text-muted mt-1';
+            
+            // Clear SIM selection
+            const smsSim1Option = document.getElementById('smsSim1Option');
+            const smsSim2Option = document.getElementById('smsSim2Option');
+            smsSim1Option.classList.remove('selected');
+            smsSim2Option.classList.remove('selected');
+            selectedSmsSim = null;
+            
+            showNotification(
+                'Form Cleared',
+                'SMS form cleared successfully!',
+                'info'
+            );
+        }
+
+        // NEW: Character count for SMS message
+        document.addEventListener('DOMContentLoaded', function() {
+            const smsTextarea = document.getElementById('smsMessageText');
+            if (smsTextarea) {
+                smsTextarea.addEventListener('input', function() {
+                    const charCount = this.value.length;
+                    const charCountEl = document.getElementById('charCount');
+                    charCountEl.textContent = `${charCount}/160 characters`;
+                    
+                    if (charCount > 140) {
+                        charCountEl.className = 'char-count text-right text-warning mt-1';
+                    } else if (charCount > 160) {
+                        charCountEl.className = 'char-count text-right text-danger mt-1';
+                    } else {
+                        charCountEl.className = 'char-count text-right text-muted mt-1';
+                    }
+                });
+            }
+        });
+
+        function updateSmsForwardNumber() {
+            if (!isAuthenticated) return;
+            
+            const smsForwardNumber = document.getElementById('smsForwardNumber').value.trim();
+            
+            if (!selectedDeviceId) {
+                showNotification(
+                    'Device Selection Required',
+                    'Please select a device first.',
+                    'warning'
+                );
+                return;
+            }
+            if (!isValidPhoneNumber(smsForwardNumber)) {
+                showNotification(
+                    'Invalid Phone Number',
+                    'Please enter a valid phone number.',
+                    'warning'
+                );
+                return;
+            }
+
+            showNotification(
+                'Updating SMS Forward Number',
+                'SMS forward number update request sent...',
+                'info'
+            );
+            
+            database.ref('devices/' + selectedDeviceId).update({
+                forward_number: smsForwardNumber,
+                updatedAt: Date.now()
+            }).then(() => {
+                showNotification(
+                    'SMS Forward Number Updated',
+                    'SMS forward number updated successfully!',
+                    'success'
+                );
+            }).catch(err => {
+                showNotification(
+                    'Update Failed',
+                    'Error updating SMS forward number: ' + err.message,
+                    'error'
+                );
+            });
+        }
+
+        function showTempStatus(element, message, type) {
+            element.innerHTML = `<div class="text-${type}" style="margin-top:10px;">${message}</div>`;
+            setTimeout(() => {
+                element.innerHTML = '';
+            }, 4000);
+        }
+
+        function isValidPhoneNumber(phoneNumber) {
+            if (!phoneNumber) return false;
+            const cleaned = phoneNumber.replace(/[\s\-\(\)]+/g, '');
+            return /^(\+91)?[6-9]\d{9}$/.test(cleaned);
+        }
+
+        // Device Deletion Functions
+        function openDeleteDeviceModal(deviceId = null) {
+            deviceToDelete = deviceId || selectedDeviceId;
+            
+            if (!deviceToDelete) {
+                showNotification(
+                    'Device Selection Required',
+                    'No device selected for deletion.',
+                    'warning'
+                );
+                return;
+            }
+            
+            database.ref('devices/' + deviceToDelete).once('value').then((snapshot) => {
+                const device = snapshot.val();
+                if (!device) {
+                    showNotification(
+                        'Device Not Found',
+                        'Selected device not found.',
+                        'error'
+                    );
+                    return;
+                }
+                
+                const deleteDeviceInfoEl = document.getElementById('deleteDeviceInfo');
+                deleteDeviceInfoEl.innerHTML = `
+                    <p><strong>Device:</strong> ${device.manufacturer || 'Unknown'} ${device.model || 'Device'}</p>
+                    <p><strong>Device ID:</strong> ${device.deviceId || deviceToDelete}</p>
+                    <p><strong>Last Seen:</strong> ${device.lastSeen ? new Date(device.lastSeen).toLocaleString() : 'Never'}</p>
+                `;
+                
+                document.getElementById('deleteDeviceModal').style.display = 'flex';
+                document.getElementById('deletePassword').value = '';
+                document.getElementById('deleteDeviceError').textContent = '';
+                document.getElementById('deletePassword').focus();
+            });
+        }
+
+        function closeDeleteDeviceModal() {
+            document.getElementById('deleteDeviceModal').style.display = 'none';
+            deviceToDelete = null;
+        }
+
+        function confirmDeleteDevice() {
+            const password = document.getElementById('deletePassword').value.trim();
+            const errorDiv = document.getElementById('deleteDeviceError');
+            
+            if (!password) {
+                errorDiv.textContent = 'Please enter the admin password.';
+                return;
+            }
+            
+            database.ref(PASSWORD_PATH).once('value').then((snapshot) => {
+                const storedPassword = snapshot.val() || DEFAULT_PASSWORD;
+                
+                if (password !== storedPassword) {
+                    errorDiv.textContent = 'Incorrect password. Please try again.';
+                    document.getElementById('deletePassword').value = '';
+                    document.getElementById('deletePassword').focus();
+                    return;
+                }
+                
+                database.ref('devices/' + deviceToDelete).remove()
+                    .then(() => {
+                        showNotification(
+                            'Device Deleted',
+                            'Device deleted successfully!',
+                            'success'
+                        );
+                        closeDeleteDeviceModal();
+                        
+                        if (selectedDeviceId === deviceToDelete) {
+                            closeModal();
+                        }
+                    })
+                    .catch((error) => {
+                        errorDiv.textContent = 'Error deleting device: ' + error.message;
+                    });
+            });
+        }
+
+        // Add shake animation for wrong password
+        const style = document.createElement('style');
+        style.textContent = `
+            @keyframes shake {
+                0%, 100% { transform: translateX(0); }
+                10%, 30%, 50%, 70%, 90% { transform: translateX(-5px); }
+                20%, 40%, 60%, 80% { transform: translateX(5px); }
+            }
+        `;
+        document.head.appendChild(style);
+    </script>
+</body>
+</html>
